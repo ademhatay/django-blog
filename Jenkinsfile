@@ -11,17 +11,14 @@ node {
         }
 
         stage('Test') {
-            // Install virtualenv if it's not available
-            sh 'pip install virtualenv || pip3 install virtualenv'
-            
-            // Create and activate virtual environment
-            sh 'python3.10 -m virtualenv env || python3 -m virtualenv env'
+            // Use python's built-in venv instead of virtualenv
+            sh 'python3 -m venv env'
             
             // Use the full path to pip and python from the virtual environment
             sh '''
                 . env/bin/activate
-                pip install -r requirements.txt
-                python manage.py test --testrunner=blog.tests.test_runners.NoDbTestRunner
+                env/bin/pip install -r requirements.txt
+                env/bin/python manage.py test --testrunner=blog.tests.test_runners.NoDbTestRunner
                 deactivate
             '''
         }
