@@ -1,33 +1,47 @@
 #!groovy
 
 node {
-
     try {
-        stage 'Checkout'
+        stage('Checkout') {
             checkout scm
 
             sh 'git log HEAD^..HEAD --pretty="%h %an - %s" > GIT_CHANGES'
             def lastChanges = readFile('GIT_CHANGES')
-            slackSend color: "warning", message: "Started `${env.JOB_NAME}#${env.BUILD_NUMBER}`\n\n_The changes:_\n${lastChanges}"
+            echo "Recent changes: ${lastChanges}"
+        }
 
-        stage 'Test'
+        stage('Test') {
             sh 'virtualenv env -p python3.10'
             sh '. env/bin/activate'
             sh 'env/bin/pip install -r requirements.txt'
             sh 'env/bin/python3.10 manage.py test --testrunner=blog.tests.test_runners.NoDbTestRunner'
+        }
 
-        stage 'Deploy'
+        stage('Deploy') {
             sh './deployment/deploy_prod.sh'
+        }
 
-        stage 'Publish results'
-            slackSend color: "good", message: "Build successful: `${env.JOB_NAME}#${env.BUILD_NUMBER}` <${env.BUILD_URL}|Open in Jenkins>"
+        stage('Publish results') {
+            echo "Deployment completed successfully!"
+        }
     }
-
     catch (err) {
-        slackSend color: "danger", message: "Build failed :face_with_head_bandage: \n`${env.JOB_NAME}#${env.BUILD_NUMBER}` <${env.BUILD_URL}|Open in Jenkins>"
-
+        // Improved error handling
+        currentBuild.result = 'FAILURE'
+        
+        // Send detailed error notification
+        echo "BUILD FAILED: ${err.message}"
+        
+        // Optional: You can add notifications here
+        // mail to: 'team@example.com', subject: 'Build Failed', body: "${err.message}\n\nCheck console output at ${BUILD_URL}"
+        
         throw err
     }
-
+    finally {
+        // This section always runs, regardless of success or failure
+        echo "Build finished with result: ${currentBuild.result ?: 'SUCCESS'}"
+        
+        // Archive artifacts if needed
+        archiveArtifacts artifacts: 'GIT_CHANGES', allowEmptyArchive: true
+    }
 }
-
