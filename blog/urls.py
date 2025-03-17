@@ -30,11 +30,6 @@ schema_view = swagger_get_schema_view(
     public=True,
 )
 
-admin.site.site_header = "Blog Admin 100"
-admin.site.site_title = "Blog Admin 100"
-admin.site.index_title = "Blog Admin 100"
-
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
@@ -43,5 +38,5 @@ urlpatterns = [
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root = settings.STATIC_URL)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     
